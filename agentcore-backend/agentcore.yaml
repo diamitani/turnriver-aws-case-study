@@ -1,0 +1,14 @@
+name: turnriver-master
+description: "TurnRiverSDR Master Agent — governed AI SDR orchestration for Turn/River portfolio companies. Routes chat intake through PAL intent, GTM strategy, RAG-DAL research, prospect qualification, sequence design, compliance gate, human approval, and Automation Planner dry-run, with workspace-scoped memory isolation and ENV-only secrets."
+entrypoint: agent.py
+runtime:
+  python: "3.11"
+  memory_mb: 512
+  timeout_seconds: 60
+memory:
+  enabled: true
+  strategy: episodic
+region: us-east-1
+tags:
+  project: turnriver
+  version: "v0.1"

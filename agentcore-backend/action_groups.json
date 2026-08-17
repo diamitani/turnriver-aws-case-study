@@ -1,0 +1,172 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "artifact_type": "agentcore-action-groups",
+  "agent_id": "turnriver-sdr-master",
+  "version": "v0.1",
+  "description": "Function/action-group contracts for the TurnRiverSDR Master Agent on Amazon Bedrock AgentCore. Each entry maps to a Bedrock action group. Research/writing functions produce artifacts only; STAGING/TRIGGER functions (stage_enrollment, trigger_n8n_dry_run) cause side effects and MUST be guarded by the compliance gate + a human approval event.",
+  "action_groups": [
+    {
+      "name": "gtm_strategist_actions",
+      "logical_agent": "gtm-strategist",
+      "side_effect": false,
+      "functions": [
+        {
+          "name": "create_icp",
+          "description": "Create a versioned ICP (icp_versions) artifact from an approved company brief and constraints. Never invents product claims; brief/KB only.",
+          "parameters": {
+            "type": "object",
+            "properties": {
+              "workspaceId": { "type": "string", "description": "Running workspace id (isolated namespace)." },
+              "brief": { "type": "string", "description": "Approved company/product brief text." },
+              "constraints": { "type": "object", "description": "Firmographics, role, pains, triggers, exclusions, scoring weights." }
+            },
+            "required": ["workspaceId", "brief", "constraints"]
+          },
+          "returns": "icp_version"
+        }
+      ]
+    },
+    {
+      "name": "rag_dal_actions",
+      "logical_agent": "rag-dal-researcher",
+      "side_effect": false,
+      "functions": [
+        {
+          "name": "search_knowledge",
+          "description": "Retrieve approved knowledge-base hits for the SAME workspace only. Cross-workspace retrieval denied by default.",
+          "parameters": {
+            "type": "object",
+            "properties": {
+              "workspaceId": { "type": "string" },
+              "query": { "type": "string" },
+              "limit": { "type": "integer", "minimum": 1, "default": 10 }
+            },
+            "required": ["workspaceId", "query"]
+          },
+          "returns": "kb_hits"
+        },
+        {
+          "name": "research_prospects",
+          "description": "Produce lead dossiers with citations (source URL, timestamp) and confidence labels per claim, using licensed sources only (Clay/Amplemarket/ZoomInfo). No autonomous scraping.",
+          "parameters": {
+            "type": "object",
+            "properties": {
+              "workspaceId": { "type": "string" },
+              "icpVersionId": { "type": "string" }
+            },
+            "required": ["workspaceId", "icpVersionId"]
+          },
+          "returns": "dossiers"
+        }
+      ]
+    },
+    {
+      "name": "prospect_qualifier_actions",
+      "logical_agent": "prospect-qualifier",
+      "side_effect": false,
+      "functions": [
+        {
+          "name": "score_leads",
+          "description": "Score contacts against an ICP version → lead_score (score, reason_codes, confidence) and lead-state transitions. Suppression always wins; never auto-stages.",
+          "parameters": {
+            "type": "object",
+            "properties": {
+              "workspaceId": { "type": "string" },
+              "contactIds": { "type": "array", "items": { "type": "string" } },
+              "icpVersionId": { "type": "string" }
+            },
+            "required": ["workspaceId", "contactIds", "icpVersionId"]
+          },
+          "returns": "scores"
+        }
+      ]
+    },
+    {
+      "name": "sequence_architect_actions",
+      "logical_agent": "sequence-architect",
+      "side_effect": false,
+      "functions": [
+        {
+          "name": "generate_sequence",
+          "description": "Generate editable, channel-aware sequence JSON with merge fields, evidence-grounded from research.",
+          "parameters": {
+            "type": "object",
+            "properties": {
+              "workspaceId": { "type": "string" },
+              "icpVersionId": { "type": "string" }
+            },
+            "required": ["workspaceId", "icpVersionId"]
+          },
+          "returns": "sequence_json"
+        },
+        {
+          "name": "preview_enrollment",
+          "description": "Dry-run resolution of merge fields + suppression/do-not-contact check against target contacts. Read-only; staging requires separate approval.",
+          "parameters": {
+            "type": "object",
+            "properties": {
+              "workspaceId": { "type": "string" },
+              "sequenceId": { "type": "string" }
+            },
+            "required": ["workspaceId", "sequenceId"]
+          },
+          "returns": "preview"
+        }
+      ]
+    },
+    {
+      "name": "approval_actions",
+      "logical_agent": "compliance-gate | npao-orchestrator",
+      "side_effect": false,
+      "functions": [
+        {
+          "name": "request_approval",
+          "description": "Create an approval request (approval_status=requested) for a scoped external action. A completed approval event is required before ANY side-effect function.",
+          "parameters": {
+            "type": "object",
+            "properties": {
+              "runId": { "type": "string" },
+              "action": { "type": "string", "description": "e.g. stage_enrollment, trigger_n8n_dry_run" },
+              "scope": { "type": "object", "description": "Exact scope: contacts, destination, sequence, counts." }
+            },
+            "required": ["runId", "action", "scope"]
+          },
+          "returns": "approval_request"
+        }
+      ]
+    },
+    {
+      "name": "automation_planner_actions",
+      "logical_agent": "automation-planner",
+      "side_effect": true,
+      "side_effect_gate": "compliance-gate approval >> dry-run >> re-approval",
+      "functions": [
+        {
+          "name": "stage_enrollment",
+          "description": "MUST reject unless approval is approved, unexpired, payload scope matches the approved preview exactly, and every contact passes suppression/do-not-contact. Side-effect gateway.",
+          "parameters": {
+            "type": "object",
+            "properties": {
+              "approvalId": { "type": "string" }
+            },
+            "required": ["approvalId"]
+          },
+          "returns": "staged | rejected"
+        },
+        {
+          "name": "trigger_n8n_dry_run",
+          "description": "Invoke the n8n engine in DRY-RUN mode only. Never activates the production workflow without a specific approval event. Dry-run by default.",
+          "parameters": {
+            "type": "object",
+            "properties": {
+              "workspaceId": { "type": "string" },
+              "workflowKey": { "type": "string", "description": "Approved n8n workflow key, e.g. prospect-automation-part1" }
+            },
+            "required": ["workspaceId", "workflowKey"]
+          },
+          "returns": "dry_run_status"
+        }
+      ]
+    }
+  ]
+}

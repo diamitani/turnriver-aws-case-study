@@ -1,0 +1,42 @@
+# Node.js
+node_modules/
+.next/
+out/
+dist/
+*.log
+npm-debug.log*
+
+# Python
+__pycycache__/
+*.pyc
+.venv/
+venv/
+*.egg-info/
+.pytest_cache/
+
+# CDK
+*.js.js
+cdk.out/
+cdk.context.json
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Build outputs
+build/
+coverage/
+
+# ZIP deliverables
+*.zip

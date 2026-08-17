@@ -1,0 +1,30 @@
+{
+  "live_icp_research": {
+    "handler": "gtm-strategist",
+    "success": true,
+    "mode": "live",
+    "compliance_pass": true,
+    "trace": [
+      "pal-intake",
+      "gtm-strategist"
+    ],
+    "model": "us.anthropic.claude-sonnet-4-5-20250929-v1:0",
+    "workspace_id": "commio"
+  },
+  "live_enrollment_block": {
+    "handler": "sequence-architect",
+    "success": true,
+    "mode": "live",
+    "compliance_pass": false,
+    "trace": [
+      "pal-intake",
+      "sequence-architect",
+      "automation-planner",
+      "compliance-gate",
+      "pending-approval"
+    ],
+    "model": "us.anthropic.claude-sonnet-4-5-20250929-v1:0",
+    "workspace_id": "commio"
+  },
+  "note": "Live AWS Bedrock AgentCore harness responses (inference profile us.anthropic.claude-sonnet-4-5-20250929-v1:0). ICP path succeeds (compliance pass); enrollment path is BLOCKED by the compliance gate (compliance_pass=false)."
+}

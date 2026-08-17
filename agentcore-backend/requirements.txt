@@ -1,0 +1,10 @@
+# TurnRiverSDR AgentCore backend — Python runtime deps
+#
+# NOTE: The `amazon-bedrock-agentcore` SDK is NOT on PyPI. It is provided by the
+# `agentcore` CLI (v0.26.0, installed via its own installer). agent.py imports it
+# with a graceful fallback, so these pip deps are sufficient for LOCAL running /
+# self-testing. To deploy to AWS, install the agentcore CLI and run `agentcore deploy`.
+
+httpx>=0.27.0
+python-dotenv>=1.0.0
+boto3>=1.34.0
